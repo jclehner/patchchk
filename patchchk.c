@@ -1,5 +1,13 @@
+#ifndef _MSC_VER
 #include <arpa/inet.h>
 #include <getopt.h>
+#else
+#include <BaseTsd.h>
+#define __attribute__(x)
+typedef SSIZE_T ssize_t;
+#define htonl(x) _byteswap_ulong((x))
+#define ntohl(x) _byteswap_ulong((x))
+#endif
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -68,9 +76,9 @@ int usage(int ret)
 		" -v [version] Set version to [version]\n"
 		" -r [region]  Set region to [region]\n"
 		"\n"
-		"patchchk v" VERSION ", Copyright (C) 2022 Joseph C. Lehner"
-		"patchchk is free software, licensed under the GNU GPLv3"
-		"Source code at https://github.com/jclehner/patchchk"
+		"patchchk v" VERSION ", Copyright (C) 2022 Joseph C. Lehner\n"
+		"patchchk is free software, licensed under the GNU GPLv3\n"
+		"Source code at https://github.com/jclehner/patchchk\n"
 	);
 
 	return ret;
@@ -145,7 +153,7 @@ void parse_version(uint8_t* version, const char* str)
 	if (n == 7) {
 		for (int i = 0; i < sizeof(v) / sizeof(v[0]); ++i) {
 			if (v[i] < 0x100) {
-				version[i + 1] = v[i];
+				version[i + 1] = v[i] & 0xff;
 			} else {
 				die("Error: invalid version part %d (is > 255)\n", v[i]);
 			}
@@ -157,32 +165,56 @@ void parse_version(uint8_t* version, const char* str)
 
 int main(int argc, char** argv)
 {
-	int c;
-	opterr = 0;
-
+	
 	char* version = NULL;
 	char* region = NULL;
 
+#ifndef _MSC_VER
+	int c;
+	opterr = 0;
+
 	while ((c = getopt(argc, argv, "+r:v:")) != -1) {
 		switch (c) {
-			case 'r':
-				region = optarg;
-				break;
-			case 'v':
-				version = optarg;
-				break;
-			case 'h':
-				return usage(0);
-			default:
-				return usage(1);
+		case 'r':
+			region = optarg;
+			break;
+		case 'v':
+			version = optarg;
+			break;
+		case 'h':
+			return usage(0);
+		default:
+			return usage(1);
 		}
 	}
+#else
+	int optind = 1;
+	for (; optind < argc; ++optind) {
+		if (argv[optind][0] == '-') {
+			if ((optind + 1) < argc) {
+				switch (argv[optind][1]) {
+				case 'r':
+					region = argv[++optind];
+					break;
+				case 'v':
+					version = argv[++optind];
+					break;
+				default:
+					return usage(1);
+				}
+			}
+		} else {
+			break;
+		}
+	}
+
+#endif
 
 	if (optind >= argc) {
 		return usage(1);
 	}
 
-	FILE* fp = fopen(argv[optind], "r+");
+	FILE* fp = fopen(argv[optind], "rb+");
 	if (!fp) {
 		perror("Error: fopen");
 		return 1;
@@ -203,7 +235,7 @@ int main(int argc, char** argv)
 		die("Error: invalid header length %u\n", hdr_len);
 	}
 
-	char board_id[board_len + 1];
+	char* board_id = malloc(board_len + 1);
 	if (fread(board_id, board_len, 1, fp) != 1) {
 		die("Error: failed to read board ID\n");
 	}
