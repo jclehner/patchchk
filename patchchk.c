@@ -1,12 +1,14 @@
-#ifndef _MSC_VER
+#if !defined(_WIN32)
 #include <arpa/inet.h>
-#include <getopt.h>
-#else
+#elif defined(_MSC_VER)
 #include <BaseTsd.h>
 #define __attribute__(x)
 typedef SSIZE_T ssize_t;
 #define htonl(x) _byteswap_ulong((x))
 #define ntohl(x) _byteswap_ulong((x))
+#elif defined(__GNUC__)
+#define htonl(x) __builtin_bswap32((x))
+#define ntohl(x) __builtin_bswap32((x))
 #endif
 #include <stdint.h>
 #include <stdlib.h>
@@ -14,6 +16,11 @@ typedef SSIZE_T ssize_t;
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
+#include <inttypes.h>
+
+#ifdef __GNUC__
+#include <getopt.h>
+#endif // _GNUC
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
@@ -165,7 +172,6 @@ void parse_version(uint8_t* version, const char* str)
 
 int main(int argc, char** argv)
 {
-	
 	char* version = NULL;
 	char* region = NULL;
 
@@ -275,14 +281,14 @@ int main(int argc, char** argv)
 	printf("Region         : %s\n", region_to_str(&hdr));
 	printf("Version        : %s\n", version_to_str(&hdr));
 	printf("Sizes\n");
-	printf("- Header       : %u\n", hdr_len);
-	printf("- Kernel       : %u\n", ntohl(hdr.kernel_len));
-	printf("- Root FS      : %u\n", ntohl(hdr.rootfs_len));
+	printf("- Header       : %" PRIu32 "\n", hdr_len);
+	printf("- Kernel       : %" PRIu32 "\n", ntohl(hdr.kernel_len));
+	printf("- Root FS      : %" PRIu32 "\n", ntohl(hdr.rootfs_len));
 	printf("Checksums\n");
-	printf("- Header       : 0x%08x\n", ntohl(hdr.header_chksum));
-	printf("- Kernel       : 0x%08x\n", ntohl(hdr.kernel_chksum));
-	printf("- Root FS      : 0x%08x\n", ntohl(hdr.rootfs_chksum));
-	printf("- Image        : 0x%08x\n", ntohl(hdr.image_chksum));
+	printf("- Header       : 0x%08" PRIx32 "\n", ntohl(hdr.header_chksum));
+	printf("- Kernel       : 0x%08" PRIx32 "\n", ntohl(hdr.kernel_chksum));
+	printf("- Root FS      : 0x%08" PRIx32 "\n", ntohl(hdr.rootfs_chksum));
+	printf("- Image        : 0x%08" PRIx32 "\n", ntohl(hdr.image_chksum));
 
 	return 0;
 }
