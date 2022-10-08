@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(patchchk VERSION 1)
+project(patchchk VERSION 2)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED True)
@@ -16,17 +16,15 @@ elseif (UNIX)
 	if (APPLE)
 		set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-macos")
 	else()
-		string(MY_OS_NAME TOLOWER ${CMAKE_SYSTEM_NAME})
+		string(TOLOWER "${CMAKE_SYSTEM_NAME}" MY_OS_NAME)
 		set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-${MY_OS_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
 	endif()
 endif()
 
-message("CPACK_PACKAGE_FILE_NAME=${CPACK_PACKAGE_FILE_NAME}")
-
 if (MSVC)
 	add_compile_options(/W4 /DVERSION="${CMAKE_PROJECT_VERSION}" /D_CRT_SECURE_NO_WARNINGS)
 else()
-	add_compile_options(-Wall -Wextra -DVERSION="${CMAKE_PROJECT_VERSION}")
+	add_compile_options(-Wall -DVERSION="${CMAKE_PROJECT_VERSION}")
 endif()
 
 add_executable(patchchk patchchk.c)
@@ -36,5 +34,3 @@ install(TARGETS patchchk
 )
 
 include(CPack)
-
-
