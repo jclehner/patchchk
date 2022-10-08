@@ -124,7 +124,7 @@ void parse_region(uint8_t* version, const char* str)
 		}
 	}
 
-	die("Error: invalid region '%s'.\n", str);
+	die("Error: unknown region '%s'.\n", str);
 }
 
 static const char* region_to_str(struct chk_header* hdr)
@@ -162,7 +162,7 @@ void parse_version(uint8_t* version, const char* str)
 			if (v[i] < 0x100) {
 				version[i + 1] = v[i] & 0xff;
 			} else {
-				die("Error: invalid version part %d (is > 255)\n", v[i]);
+				die("Error: invalid version part %d (must be < 256)\n", v[i]);
 			}
 		}
 	} else {
@@ -250,10 +250,12 @@ int main(int argc, char** argv)
 
 	if (region) {
 		parse_region(hdr.version, region);
+		printf("Region  : %s\n", region_to_str(&hdr));
 	}
 
 	if (version) {
 		parse_version(hdr.version, version);
+		printf("Version : %s\n", version_to_str(&hdr));
 	}
 
 	if (region || version) {
@@ -265,7 +267,10 @@ int main(int argc, char** argv)
 		ntgr_checksum_add(&chk, board_id, board_len);
 		hdr.header_chksum = htonl(ntgr_checksum_fini(&chk));
 
+		printf("Checksum: 0x%08" PRIx32 "\n", ntohl(hdr.header_chksum));
+
 		rewind(fp);
+
 		if (fwrite(&hdr, sizeof(hdr), 1, fp) != 1) {
 			die("Error: failed to write header\n");
 		}
@@ -273,9 +278,10 @@ int main(int argc, char** argv)
 		if (fwrite(board_id, board_len, 1, fp) != 1) {
 			die("Error: failed to write board ID\n");
 		}
-	}
 
-	fclose(fp);
+		fclose(fp);
+		return 0;
+	}
 
 	printf("Board ID       : %s\n", board_id);
 	printf("Region         : %s\n", region_to_str(&hdr));
