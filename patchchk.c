@@ -124,7 +124,7 @@ void parse_region(uint8_t* version, const char* str)
 		}
 	}
 
-	die("Error: unknown region '%s'.\n", str);
+	die("Error: unknown region '%s'\n", str);
 }
 
 static const char* region_to_str(struct chk_header* hdr)
@@ -166,7 +166,7 @@ void parse_version(uint8_t* version, const char* str)
 			}
 		}
 	} else {
-		die("Error: version must be 'A.B.C.D_E.F.G'.\n");
+		die("Error: version must be 'A.B.C.D_E.F.G'\n");
 	}
 }
 
