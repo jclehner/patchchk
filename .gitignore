@@ -54,3 +54,5 @@ dkms.conf
 .vs/*
 build/*
 out/*
+
+*.swp
