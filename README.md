@@ -36,7 +36,7 @@ Now verify using:
 $ patchchk EX3700-V1.0.0.22_1.0.17.chk 
 Board ID       : U12H319T00_NETGEAR
 Region         : WW
-Version        : <b>1.0.0.22_1.0.17</b>
+Version        : <b>1.0.0.22_1.0.18</b>
 Sizes
 - Header       : 58
 - Kernel       : 5622416
