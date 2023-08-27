@@ -80,8 +80,9 @@ int usage(int ret)
 		"Usage: patchchk [OPTIONS...] FILE\n"
 		"\n"
 		"Options:\n"
-		" -v [version] Set version to [version]\n"
-		" -r [region]  Set region to [region]\n"
+		" -v [version]  Change version\n"
+		" -r [region]   Change region\n"
+		" -b [board id] Change board id\n"
 		"\n"
 		"patchchk v" VERSION ", Copyright (C) 2022 Joseph C. Lehner\n"
 		"patchchk is free software, licensed under the GNU GPLv3\n"
@@ -174,18 +175,22 @@ int main(int argc, char** argv)
 {
 	char* version = NULL;
 	char* region = NULL;
+	char* new_board_id = NULL;
 
 #ifndef _MSC_VER
 	int c;
 	opterr = 0;
 
-	while ((c = getopt(argc, argv, "+r:v:")) != -1) {
+	while ((c = getopt(argc, argv, "+r:v:b:")) != -1) {
 		switch (c) {
 		case 'r':
 			region = optarg;
 			break;
 		case 'v':
 			version = optarg;
+			break;
+		case 'b':
+			new_board_id = optarg;
 			break;
 		case 'h':
 			return usage(0);
@@ -204,6 +209,9 @@ int main(int argc, char** argv)
 					break;
 				case 'v':
 					version = argv[++optind];
+					break;
+				case 'b':
+					new_board_id = argv[++optind];
 					break;
 				default:
 					return usage(1);
@@ -258,13 +266,19 @@ int main(int argc, char** argv)
 		printf("Version : %s\n", version_to_str(&hdr));
 	}
 
-	if (region || version) {
+	if (new_board_id) {
+		printf("Board   : %s\n", new_board_id);
+		free(board_id);
+		board_id = new_board_id;
+	}
+
+	if (region || version || new_board_id) {
 		hdr.header_chksum = 0;
 
 		struct ntgr_checksum chk;
 		ntgr_checksum_init(&chk);
 		ntgr_checksum_add(&chk, &hdr, sizeof(hdr));
-		ntgr_checksum_add(&chk, board_id, board_len);
+		ntgr_checksum_add(&chk, board_id, strlen(board_id));
 		hdr.header_chksum = htonl(ntgr_checksum_fini(&chk));
 
 		printf("Checksum: 0x%08" PRIx32 "\n", ntohl(hdr.header_chksum));
